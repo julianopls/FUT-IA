@@ -115,10 +115,21 @@ let players = [];
 let me = null;
 const chasers = { me: null, cpu: null };
 
+/* ========================================================== */
+/* CONEXÃO SOCKET.IO (Adicione aqui)                           */
+/* ========================================================== */
+const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://fut-ia.onrender.com';
+
+const socket = io(serverUrl, {
+    transports: ['websocket', 'polling']
+});
+
 /* Online: 'off' (offline), 'host' (anfitrião, roda a partida) ou 'guest' (convidado, só recebe e desenha) */
 const net = {
-  mode: 'off', ws: null, code: '',
-  peers: new Map(),   /* anfitrião: gid do amigo -> { char, input } */
+  mode: 'off', ws: socket, code: '', // <-- Aqui atribuímos o socket criado acima à propriedade ws
+  peers: new Map(),   /* anfitrião: gid id do amigo -> { char, input } */
   assign: [],         /* quem controla qual vaga: { team, idx, gid } (gid 0 = anfitrião) */
   myGid: 0,           /* convidado: meu número na sala */
   baseSize: 1,        /* tamanho de time escolhido no menu */
@@ -2640,12 +2651,19 @@ function netConnect(onOpen) {
   let ws;
   let opened = false;
 
+  // try {
+  //   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+  // } catch (err) {
+  //   setOnlineStatus('Não foi possível conectar ao servidor.');
+  //   return;
+  // }
+
   try {
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  } catch (err) {
-    setOnlineStatus('Não foi possível conectar ao servidor.');
-    return;
-  }
+  ws = new WebSocket('wss://fut-ia.onrender.com/');
+} catch (err) {
+  setOnlineStatus('Não foi possível conectar ao servidor.');
+  return;
+}
 
   net.ws = ws;
 
