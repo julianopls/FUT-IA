@@ -2659,7 +2659,7 @@ function netConnect(onOpen) {
   // }
 
   try {
-  ws = new WebSocket('wss://fut-ia.onrender.com/');
+  ws = new WebSocket('https://fut-ia.onrender.com/');
 } catch (err) {
   setOnlineStatus('Não foi possível conectar ao servidor.');
   return;
