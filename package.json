@@ -1,0 +1,12 @@
+{
+  "name": "futebol-de-rua",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Futebol de Rua - servidor para jogar online em 2 PCs na mesma rede",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

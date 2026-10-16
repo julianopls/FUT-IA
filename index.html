@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Futebol de Rua</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-state="menu">
+  <div id="app">
+    <div id="hud">
+      <span id="levelLabel">Dificuldade: Normal</span>
+      <div class="hud-actions">
+        <button id="btnSkipReplay" class="hud-btn hidden" type="button">⏭ Pular replay</button>
+        <button id="btnPause" class="hud-btn" type="button">Pausar</button>
+        <button id="btnRestart" class="hud-btn" type="button">Reiniciar</button>
+        <button id="btnMenu" class="hud-btn" type="button">Menu</button>
+      </div>
+    </div>
+
+    <div id="stage">
+      <canvas id="game" width="960" height="600" aria-label="Campo de futebol"></canvas>
+      <button id="btnSound" class="snd-btn" type="button" aria-label="Ligar ou desligar o som" title="Som (tecla M)">🔊</button>
+
+      <section id="menu" class="overlay">
+        <div class="card card-menu">
+          <h1>FUT SENAI</h1>
+          <p>Quadra pequena, 90 segundos. Quem fizer mais gols leva a partida.</p>
+
+          <p class="opt-label">Dificuldade</p>
+          <div class="seg" role="group" aria-label="Dificuldade">
+            <button type="button" class="seg-btn" data-level="easy">Fácil</button>
+            <button type="button" class="seg-btn active" data-level="normal">Normal</button>
+            <button type="button" class="seg-btn" data-level="hard">Difícil</button>
+          </div>
+
+          <p class="opt-label">Jogadores por time (você controla só 1)</p>
+          <div class="seg" role="group" aria-label="Jogadores por time">
+            <button type="button" class="seg-btn active" data-size="1">1 x 1</button>
+            <button type="button" class="seg-btn" data-size="2">2 x 2</button>
+            <button type="button" class="seg-btn" data-size="3">3 x 3</button>
+          </div>
+
+          <p class="opt-label">Personagem</p>
+          <div id="charPicker" class="chars" role="group" aria-label="Personagem"></div>
+
+          <div class="actions">
+            <button id="btnPlay" class="btn" type="button">JOGAR</button>
+            <button id="btnChamp" class="btn btn-gold" type="button">⚽ CAMPEONATO</button>
+            <button id="btnOnline" class="btn btn-light" type="button">🌐 ONLINE</button>
+            <button id="btnHow" class="btn btn-light" type="button">COMO JOGAR</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="howto" class="overlay hidden">
+        <div class="card">
+          <h2>COMO JOGAR</h2>
+          <ul class="howto">
+            <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ou setas: mover</li>
+            <li><kbd>Espaço</kbd>: chutar</li>
+            <li><kbd>Esc</kbd>: pausar e continuar</li>
+            <li><kbd>M</kbd>: ligar ou desligar o som</li>
+            <li>No celular: direcional à esquerda e botão CHUTAR à direita</li>
+            <li>Você ataca o gol da direita. Escolha seu personagem no menu.</li>
+            <li>Em 2 x 2 e 3 x 3 você controla só o jogador marcado com VOCÊ. Os outros são do computador.</li>
+            <li>Encoste na bola para conduzi-la. O chute vai na direção em que você está olhando.</li>
+            <li>A bola bate nas traves e volta!</li>
+            <li>Online: crie uma sala (1v1 até 5v5) ou entre com o código para jogar em um dos times ou só assistir (até 5 espectadores). Cada um digita o próprio nome, que aparece em cima do jogador.</li>
+          </ul>
+          <button id="btnBack" class="btn" type="button">VOLTAR</button>
+        </div>
+      </section>
+
+      <section id="online" class="overlay hidden">
+        <div class="card card-online">
+          <h2>🌐 FUTEBOL DE RUA — ONLINE</h2>
+
+          <div id="onlineChoose">
+            <p class="online-hint">Na mesma rede: um PC cria a sala e os outros entram com o código, jogando em um dos times ou só assistindo. Vagas sem pessoa ficam com o computador.</p>
+
+            <p class="opt-label">Seu nome</p>
+            <input id="playerName" class="txt-in" type="text" maxlength="12" placeholder="Digite seu nome" autocomplete="off" aria-label="Seu nome">
+
+            <p class="opt-label">O que você quer fazer?</p>
+            <div class="seg" role="group" aria-label="O que você quer fazer">
+              <button type="button" class="seg-btn active" data-omode="create">Criar uma sala</button>
+              <button type="button" class="seg-btn" data-omode="play">Entrar para jogar</button>
+              <button type="button" class="seg-btn" data-omode="spec">Entrar como espectador</button>
+            </div>
+
+            <div id="rowCode" class="hidden">
+              <p class="opt-label">Código da sala</p>
+              <input id="roomCode" class="txt-in" type="text" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off" aria-label="Código da sala">
+            </div>
+
+            <div id="rowSize">
+              <p class="opt-label">Tamanho da partida</p>
+              <div class="seg" role="group" aria-label="Tamanho da partida">
+                <button type="button" class="seg-btn" data-osize="1">1v1</button>
+                <button type="button" class="seg-btn" data-osize="2">2v2</button>
+                <button type="button" class="seg-btn" data-osize="3">3v3</button>
+                <button type="button" class="seg-btn" data-osize="4">4v4</button>
+                <button type="button" class="seg-btn active" data-osize="5">5v5</button>
+              </div>
+            </div>
+
+            <div id="rowTeam">
+              <p class="opt-label">Time</p>
+              <div class="seg" role="group" aria-label="Time">
+                <button type="button" class="seg-btn t1 active" data-oteam="1">Time 1 — Amarelo</button>
+                <button type="button" class="seg-btn t2" data-oteam="2">Time 2 — Vermelho</button>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="btnOnlineGo" class="btn" type="button">CRIAR SALA</button>
+            </div>
+          </div>
+
+          <div id="roomView" class="hidden">
+            <p class="opt-label">Código da sala</p>
+            <p id="roomCodeShow" class="room-code"></p>
+            <div class="teams">
+              <div id="team1List" class="team-box t1"></div>
+              <div id="team2List" class="team-box t2"></div>
+            </div>
+            <p id="specList" class="spec-list"></p>
+          </div>
+
+          <p id="onlineStatus" class="online-status"></p>
+          <div class="actions">
+            <button id="btnOnlineStart" class="btn hidden" type="button">COMEÇAR PARTIDA</button>
+            <button id="btnOnlineBack" class="btn btn-light" type="button">VOLTAR</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="pause" class="overlay hidden">
+        <div class="card">
+          <h2>PAUSADO</h2>
+          <div class="actions">
+            <button id="btnResume" class="btn" type="button">CONTINUAR</button>
+            <button id="btnPauseRestart" class="btn btn-light" type="button">REINICIAR</button>
+            <button id="btnPauseMenu" class="btn btn-light" type="button">MENU INICIAL</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="end" class="overlay hidden">
+        <div class="card">
+          <h2 id="endTitle">FIM DE JOGO</h2>
+          <p id="endResult" class="result"></p>
+          <p id="endScore" class="final-score"></p>
+          <p id="endChampInfo" class="champ-info hidden"></p>
+          <div id="endNormalActions" class="actions">
+            <button id="btnAgain" class="btn" type="button">JOGAR NOVAMENTE</button>
+            <button id="btnEndMenu" class="btn btn-light" type="button">MENU INICIAL</button>
+          </div>
+          <div id="endChampActions" class="actions hidden">
+            <button id="btnChampAdvance" class="btn" type="button">PRÓXIMA PARTIDA</button>
+            <button id="btnChampRetry" class="btn btn-light" type="button">TENTAR NOVAMENTE</button>
+            <button id="btnChampEndBack" class="btn btn-light" type="button">VOLTAR AO MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="championship" class="overlay hidden">
+        <div class="card card-wide">
+          <h2>⚽ CAMPEONATO DO SENAI</h2>
+          <p class="champ-subtitle">Vença 5 adversários cada vez mais fortes!</p>
+          <div id="champBracket" class="bracket"></div>
+          <div class="actions">
+            <button id="btnChampStart" class="btn" type="button">COMEÇAR</button>
+            <button id="btnChampMenuBack" class="btn btn-light" type="button">VOLTAR AO MENU</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="champEnd" class="overlay hidden">
+        <div class="card">
+          <div class="trophy">🏆</div>
+          <h2>CAMPEÃO DO SENAI!</h2>
+          <p>Você derrotou todos os adversários e conquistou o título!</p>
+          <p id="champFinalStats" class="final-score"></p>
+          <div class="actions">
+            <button id="btnChampNewRun" class="btn" type="button">JOGAR CAMPEONATO DE NOVO</button>
+            <button id="btnChampEndMenuBack" class="btn btn-light" type="button">MENU INICIAL</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="touch">
+        <div id="pad">
+          <button type="button" class="tbtn" data-touch="up" aria-label="Cima">▲</button>
+          <button type="button" class="tbtn" data-touch="left" aria-label="Esquerda">◀</button>
+          <button type="button" class="tbtn" data-touch="right" aria-label="Direita">▶</button>
+          <button type="button" class="tbtn" data-touch="down" aria-label="Baixo">▼</button>
+        </div>
+        <button type="button" id="kickBtn" class="tbtn" data-touch="kick">CHUTAR</button>
+      </div>
+    </div>
+
+    <p id="rotate">Gire o celular para jogar na horizontal.</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
