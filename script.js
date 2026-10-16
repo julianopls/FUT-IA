@@ -2648,47 +2648,60 @@ function netConnect(onOpen) {
   closeSocket();
   setOnlineStatus('Conectando...');
 
-  let ws;
-  let opened = false;
+ let opened = false;
+let socket;
 
-  // try {
-  //   ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-  // } catch (err) {
-  //   setOnlineStatus('Não foi possível conectar ao servidor.');
-  //   return;
-  // }
+try {
+    const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : 'https://fut-ia.onrender.com';
 
-  try {
-  ws = new WebSocket('https://fut-ia.onrender.com/');
+    // Inicializa a conexão via Socket.io
+    socket = io(serverUrl, {
+        transports: ['websocket', 'polling']
+    });
 } catch (err) {
-  setOnlineStatus('Não foi possível conectar ao servidor.');
-  return;
+    setOnlineStatus('Não foi possível conectar ao servidor.');
+    return;
 }
 
-  net.ws = ws;
+net.ws = socket; 
 
-  ws.onopen = () => {
+// ADAPTAÇÃO CRUCIAL: Se o código do jogo usa net.ws.send(), 
+// isso redireciona o .send antigo para o padrão do Socket.io (.emit)
+socket.send = function(data) {
+    socket.emit('message', data);
+};
+
+socket.on('connect', () => {
     opened = true;
-    onOpen();
-  };
+    if (typeof onOpen === 'function') onOpen();
+});
 
-  ws.onmessage = (ev) => {
+// Evento que recebe as mensagens do servidor
+socket.on('chat_message', (data) => {
     let m;
-
-    try { m = JSON.parse(ev.data); } catch (err) { return; }
-
+    try { 
+        m = typeof data === 'string' ? JSON.parse(data) : data; 
+    } catch (err) { 
+        m = data; 
+    }
     handleNet(m);
-  };
+});
 
-  ws.onclose = () => {
-    if (net.ws !== ws) return;
+socket.on('disconnect', () => {
+    if (net.ws !== socket) return;
 
     net.ws = null;
     leaveOnline();
     backToLobby(opened
-      ? 'A conexão com o servidor caiu.'
-      : 'Não foi possível conectar. Rode "node server.js" e abra o jogo por ele.');
-  };
+        ? 'A conexão com o servidor caiu.'
+        : 'Não foi possível conectar. Verifique se o servidor está ativo.');
+});
+
+socket.on('connect_error', (err) => {
+    setOnlineStatus('Não foi possível conectar ao servidor.');
+});
 }
 
 function handleNet(m) {
