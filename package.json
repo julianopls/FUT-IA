@@ -1,12 +1,13 @@
 {
-  "name": "futebol-de-rua",
+  "name": "fut-ia-server",
   "version": "1.0.0",
-  "private": true,
-  "description": "Futebol de Rua - servidor para jogar online em 2 PCs na mesma rede",
+  "description": "Servidor multiplayer do FUT-IA",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
   }
 }
