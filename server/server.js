@@ -1,4 +1,3 @@
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -6,7 +5,8 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(http, {
+// CORRIGIDO: Agora aponta corretamente para 'server' e não para o módulo 'http'
+const io = new Server(server, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
@@ -15,6 +15,9 @@ const io = new Server(http, {
 });
 
 const salas = {};
+
+// Servir arquivos estáticos (html, css, js) da pasta atual
+app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
   res.send("Servidor FUT-IA online!");
@@ -25,6 +28,8 @@ app.get("/health", (req, res) => {
 });
 
 io.on("connection", (socket) => {
+  console.log(`Novo usuário conectado: ${socket.id}`);
+
   socket.on("criar-sala", ({ nome, time }, callback) => {
     const codigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
@@ -41,6 +46,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    console.log(`Usuário desconectado: ${socket.id}`);
     for (const codigo in salas) {
       const sala = salas[codigo];
 
