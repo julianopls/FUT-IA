@@ -2648,60 +2648,74 @@ function netConnect(onOpen) {
   closeSocket();
   setOnlineStatus('Conectando...');
 
- let opened = false;
-let socket;
+let opened = false;
 
 try {
     const serverUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
         ? 'http://localhost:3000'
         : 'https://fut-ia.onrender.com';
 
-    // Inicializa a conexão via Socket.io
-    socket = io(serverUrl, {
-        transports: ['websocket', 'polling']
+    console.log("A tentar ligar ao servidor:", serverUrl);
+
+    const socket = io(serverUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 10, // Tenta reconectar até 10 vezes
+        timeout: 20000 // Timeout de 20 segundos
     });
+
+    net.ws = socket; 
+
+    // ADAPTAÇÃO: Redireciona o .send antigo para o padrão do Socket.io (.emit)
+    socket.send = function(data) {
+        socket.emit('message', data);
+    };
+
+    socket.on('connect', () => {
+        console.log("✅ Conexão estabelecida com sucesso! ID:", socket.id);
+        opened = true;
+        if (typeof onOpen === 'function') onOpen();
+    });
+
+    socket.on('connect_attempt', (attempt) => {
+        console.log(`🔄 Tentativa de conexão #${attempt}...`);
+    });
+
+    socket.on('connect_error', (error) => {
+        console.warn("⚠️ Erro ou demora na conexão:", error.message);
+        setOnlineStatus('Não foi possível conectar ao servidor.');
+    });
+
+    socket.on('reconnect_attempt', (attempt) => {
+        console.log(`🔄 Tentativa de reconexão #${attempt}`);
+    });
+
+    // Evento que recebe as mensagens do servidor
+    socket.on('chat_message', (data) => {
+        let m;
+        try { 
+            m = typeof data === 'string' ? JSON.parse(data) : data; 
+        } catch (err) { 
+            m = data; 
+        }
+        handleNet(m);
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log("❌ Desconectado do servidor. Motivo:", reason);
+        if (net.ws !== socket) return;
+
+        net.ws = null;
+        leaveOnline();
+        backToLobby(opened
+            ? 'A conexão com o servidor caiu.'
+            : 'Não foi possível conectar. Verifique se o servidor está ativo.');
+    });
+
 } catch (err) {
+    // Bloco catch obrigatório para fechar o try
+    console.error("Erro crítico na conexão:", err);
     setOnlineStatus('Não foi possível conectar ao servidor.');
-    return;
 }
-
-net.ws = socket; 
-
-// ADAPTAÇÃO CRUCIAL: Se o código do jogo usa net.ws.send(), 
-// isso redireciona o .send antigo para o padrão do Socket.io (.emit)
-socket.send = function(data) {
-    socket.emit('message', data);
-};
-
-socket.on('connect', () => {
-    opened = true;
-    if (typeof onOpen === 'function') onOpen();
-});
-
-// Evento que recebe as mensagens do servidor
-socket.on('chat_message', (data) => {
-    let m;
-    try { 
-        m = typeof data === 'string' ? JSON.parse(data) : data; 
-    } catch (err) { 
-        m = data; 
-    }
-    handleNet(m);
-});
-
-socket.on('disconnect', () => {
-    if (net.ws !== socket) return;
-
-    net.ws = null;
-    leaveOnline();
-    backToLobby(opened
-        ? 'A conexão com o servidor caiu.'
-        : 'Não foi possível conectar. Verifique se o servidor está ativo.');
-});
-
-socket.on('connect_error', (err) => {
-    setOnlineStatus('Não foi possível conectar ao servidor.');
-});
 }
 
 function handleNet(m) {
